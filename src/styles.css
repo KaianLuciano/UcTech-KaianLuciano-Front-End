@@ -78,6 +78,31 @@
     font-weight: bold;
 }
 
+.table{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    background-color: #ffffff;
+    width: 800px;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+.table h2{
+    margin: 26px 0;
+    font-size: 39px;
+    margin-left: 60px;
+    white-space: nowrap;
+}
+
+.table li{
+    margin-bottom: 6px;
+    font-weight: bold;
+    margin-left: 80px;
+
+}
+
+
 @media (max-width: 620px) {
     .title{
         font-size: 60px;
