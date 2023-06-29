@@ -8,6 +8,13 @@ import './styles.css';
 import api from './services/api';
 
 function App() {
+
+  /*
+  15.684.3070001-26
+  24410913000144
+  00.280.2730002-18
+  */
+
   const [inputSalvar, setInputSalvar] = useState('');
   const [inputBuscar, setInputBuscar] = useState('');
   const [empresa, setEmpresa] = useState({});
@@ -15,59 +22,94 @@ function App() {
   const [showInputBuscar, setShowInputBuscar] = useState(false);
   const [showMain, setShowMain] = useState(false);
 
-  async function handleSearch() {
-    if (inputBuscar === '') {
-      alert('Campo de busca vazio, digite algo para continuar.');
-      return;
+  function validarCampoPesquisa(campo) {
+    var regex = /^[0-9.\/-]+$/; // Expressão regular para verificar se contém apenas números, pontos, barras e traços
+  
+    // Remove os caracteres '.', '-', e '/' do campo de pesquisa
+    var numerosCampo = campo.replace(/[^\d.\/-]/g, '');
+  
+    if (numerosCampo !== campo) {
+      throw new Error("O campo de pesquisa contém letras ou caracteres inválidos!");
     }
 
-    try {
-      const response = await api.get(`${inputBuscar}`);
-      setEmpresa(response.data);
-      console.log(response.data);
-      setShowMain(true);
-      setInputBuscar('');
-    } catch {
-      alert('Erro ao buscar empresa');
-      setInputBuscar('');
+    if (numerosCampo.length === 0) {
+      throw new Error("O campo de pesquisa está vazio!");
+    }
+  
+  }
+
+  function validarCNPJ(cnpj) {
+    // Remove todos os caracteres não numéricos do CNPJ
+    var numerosCNPJ = cnpj.replace(/[^\d]/g, '');
+
+    // Verifica se o CNPJ possui 14 dígitos
+    if (numerosCNPJ.length !== 14) {
+      throw new Error("Formato inserido invalido. formato aceitavel (XX.XXX.XXX/XXXX-XX)");
     }
   }
 
-  async function handleSalvar() {
-    if (inputSalvar === '') {
-      alert('Campo de CNPJ vazio, digite algo para continuar.');
-      return;
-    }
-
+  async function handleSearch() {
     try {
-      const response = await api.post(`${inputSalvar}`); // Substitua 'sua-rota' pela rota correta da sua API
+      validarCampoPesquisa(inputBuscar);
+      validarCNPJ(inputBuscar)
+
+      var numerosCNPJ = inputBuscar.replace(/[^\d]/g, '');
+
+      const response = await api.get(`${numerosCNPJ}`);
+      setEmpresa(response.data);
+
+      if(response.data.statusCodeValue == 404) {
+        throw new Error(response.data.body);   
+      } else {
+        setShowMain(true);
+        setInputBuscar('');
+      }
+
+    } catch (error){
+      alert(error.message);
+      setInputBuscar('');
+      return;
+    } 
+  }
+
+  async function handleSalvar() {
+    try {
+      validarCampoPesquisa(inputSalvar);
+      validarCNPJ(inputSalvar)
+
+      var numerosCNPJ = inputSalvar.replace(/[^\d]/g, '');
+
+      const response = await api.post(`${numerosCNPJ}`); // Substitua 'sua-rota' pela rota correta da sua API
       console.log(response.data);
-      setInputSalvar('');
-      setShowMain(false);
-      setShowInputSalvar(false);
-    } catch {
-      alert('Erro ao salvar empresa');
+
+      if(response.data.statusCodeValue == 409) {
+        throw new Error(response.data.body);
+      } 
+
+      if(response.data.statusCodeValue == 404) {
+        throw new Error(response.data.body);   
+      } else {
+        alert(`Empresa Salva Com Sucesso! - Basta consulta-la com ${inputSalvar}`)
+        setInputSalvar('');
+        setShowMain(false);
+        setShowInputSalvar(false);
+      }
+
+    } catch (error) {
+      alert(error.message);
       setInputSalvar('');
     }
   }
 
   function handleShowInputSalvar() {
     setShowInputSalvar(true);
-    setShowMain(false);
-  }
-
-  function handleHideInputSalvar() {
-    setShowInputSalvar(false);
+    setShowInputBuscar(false)
     setShowMain(false);
   }
 
   function handleShowInputBuscar() {
     setShowInputBuscar(true);
-    setShowMain(false);
-  }
-
-  function handleHideInputBuscar() {
-    setShowInputBuscar(false);
+    setShowInputSalvar(false);
     setShowMain(false);
   }
 
@@ -83,21 +125,9 @@ function App() {
     setShowMain(false);
   }
 
-  function handleSearchAndShowMain() {
-    handleSearch();
-    handleShowMain();
-  }
-
-  function handleSalvarEmpresa() {
-    // Lógica para salvar a empresa
-    setInputSalvar('');
-    setShowInputSalvar(false);
-    setShowMain(false);
-  }
-
   return (
     <div className="container">
-      <h1 className="title">Desafio Técnico</h1>
+      <h1 className="title">Cadastro De Empresas</h1>
 
       <div className="button-group">
         <Button
@@ -119,7 +149,7 @@ function App() {
         <div className="containerInput">
           <input
             type="text"
-            placeholder="Digite o CNPJ da empresa para salvar..."
+            placeholder="Digite o CNPJ.."
             value={inputSalvar}
             onChange={(event) => setInputSalvar(event.target.value)}
           />
@@ -137,12 +167,12 @@ function App() {
         <div className="containerInput">
           <input
             type="text"
-            placeholder="Digite o CNPJ da empresa para buscar..."
+            placeholder="Busca por CNPJ ou Nome..."
             value={inputBuscar}
             onChange={(event) => setInputBuscar(event.target.value)}
           />
 
-          <button className="buttonSearch" onClick={handleSearchAndShowMain}>
+          <button className="buttonSearch" onClick={handleSearch}>
             <FiSearch size={25} color="#FFF" />
           </button>
           <button className="buttonSearch" onClick={handleCancel}>
