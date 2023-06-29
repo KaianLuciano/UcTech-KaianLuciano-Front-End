@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import Button from '@material-ui/core/Button';
 import { BiTrash, BiUserPlus } from "react-icons/bi";
-import Table from 'react-bootstrap/Table';
 
 import './styles.css';
 
@@ -47,10 +46,15 @@ function App() {
     try {
       handleShowTable()
       const response = await api.get();
-      console.log(response)
-      setListaEmpresas(response.data.body);
+      
+      if(response.data.statusCodeValue == 204) {
+        throw new Error(response.data.body);   
+      } else {
+        setListaEmpresas(response.data.body);
+      }
+
     } catch (error) {
-      alert('Erro ao obter a lista de empresas');
+      alert(error.message);
       console.log(error);
     }
   }
@@ -114,6 +118,11 @@ function App() {
     } 
   }
 
+  function verificarLetras(campo) {
+    var regexLetras = /[a-zA-Z]/;
+    return regexLetras.test(campo);
+  }
+
   async function handleSalvar() {
     try {
       validarCampoPesquisa(inputSalvar);
@@ -121,7 +130,13 @@ function App() {
 
       var numerosCNPJ = inputSalvar.replace(/[^\d]/g, '');
 
-      const response = await api.post(`${numerosCNPJ}`); // Substitua 'sua-rota' pela rota correta da sua API
+    if (verificarLetras(inputSalvar)) {
+      throw new Error("O campo não pode conter letras!");
+    }
+
+      console.log(inputSalvar)
+
+      const response = await api.post(`${numerosCNPJ}`);
       console.log(response.data);
 
       if(response.data.statusCodeValue == 409) {
@@ -262,9 +277,9 @@ function App() {
         <h2>Lista de Empresas Cadastradas</h2>
         
           <ul>
-            {listaEmpresas.map((empresa) => (
-              <li key={empresa.id}>{empresa.razaoSocial}</li>
-            ))}
+          {listaEmpresas.map((empresa, index) => (
+            <li key={empresa.razaoSocial + index}>{empresa.razaoSocial}</li>
+          ))}
           </ul>
         
       </div>
