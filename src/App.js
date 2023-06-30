@@ -285,8 +285,6 @@ function App() {
       </div>
       )}
 
-      
-
     </div>
   );
 }
