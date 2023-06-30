@@ -143,6 +143,10 @@ function App() {
         throw new Error(response.data.body);
       } 
 
+      if(response.data.statusCodeValue == 500) {
+        throw new Error(response.data.body);
+      } 
+
       if(response.data.statusCodeValue == 404) {
         throw new Error(response.data.body);   
       } else {
